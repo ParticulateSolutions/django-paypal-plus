@@ -80,6 +80,13 @@ paypal_payment = paypal_wrapper.init(
 )
 ```
 
+Here is an example to check if a payment was approved:
+```python
+is_updated = paypal_payment.refresh_from_paypal(paypal_wrapper=paypal_wrapper)
+if is_updated and paypal_payment.state == 'approved':
+    # open the PayPal window using NotifyPaypalView
+```
+
 ## Copyright and license
 
 Copyright 2017-2018 Jonas Braun for Particulate Solutions GmbH, under [MIT license](https://github.com/minddust/bootstrap-progressbar/blob/master/LICENSE).
