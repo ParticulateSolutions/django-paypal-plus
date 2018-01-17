@@ -1,0 +1,2 @@
+include django_paypal/*
+include django_paypal/cacert.pem
