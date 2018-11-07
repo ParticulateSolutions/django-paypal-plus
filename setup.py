@@ -57,12 +57,12 @@ if sys.argv[-1] == 'publish':
 
 
 setup(
-    name='django-paypal',
+    name='django-paypal-plus',
     author='Particulate Solutions GmbH',
     author_email='tech@particulate.me',
     description=u'Django integration of PayPal',
     version=version,
-    url='https://github.com/ParticulateSolutions/django-paypal',
+    url='https://github.com/ParticulateSolutions/django-paypal-plus',
     packages=get_packages('django_paypal'),
     package_data=get_package_data('django_paypal'),
     include_package_data=True,

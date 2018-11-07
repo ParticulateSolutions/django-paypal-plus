@@ -1,21 +1,21 @@
-# django-paypal [![Build Status](https://travis-ci.org/ParticulateSolutions/django-paypal.svg?branch=master)](https://travis-ci.org/ParticulateSolutions/django-paypal)
+# django-paypal-plus [![Build Status](https://travis-ci.org/ParticulateSolutions/django-paypal-plus.svg?branch=master)](https://travis-ci.org/ParticulateSolutions/django-paypal-plus)
 
 `django-paypal` is a lightweight [django](http://djangoproject.com) plugin which provides the integration of the payment provider [PayPal](https://paypal.com).
 
-## How to install django-paypal?
+## How to install django-paypal-plus?
 
-There are just two steps needed to install django-paypal:
+There are just two steps needed to install django-paypal-plus:
 
-1. Install django-paypal to your virtual env:
+1. Install django-paypal-plus to your virtual env:
 
 	```bash
-	pip install django-paypal
+	pip install django-paypal-plus
 	```
 
 2. Configure your django installation with the following lines:
 
 	```python
-    # django-paypal
+    # django-paypal-plus
     INSTALLED_APPS += ('django_paypal', )
 
     PAYPAL = True
@@ -28,7 +28,7 @@ There are just two steps needed to install django-paypal:
 	```
 
 
-## What do you need for django-paypal?
+## What do you need for django-paypal-plus?
 
 1. Django >= 1.8
 
