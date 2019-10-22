@@ -30,7 +30,7 @@ class NotifyPaypalView(View):
                 break
         if payment_id is None:
             return HttpResponse(status=400)
-        
+
         try:
             paypal_payment = PaypalPayment.objects.get(payment_id=payment_id)
         except PaypalPayment.DoesNotExist:

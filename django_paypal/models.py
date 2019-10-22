@@ -143,7 +143,7 @@ class PaypalTransaction(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.transaction_id
+        return '{} - {} {}'.format(self.reference_id, self.total_amount, self.currency)
 
     class Meta:
         verbose_name = _("Paypal Transaction")
@@ -169,7 +169,7 @@ class PaypalItem(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.sku
+        return self.name
 
     class Meta:
         verbose_name = _("Paypal Item")
