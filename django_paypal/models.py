@@ -19,6 +19,7 @@ class PaypalPayment(models.Model):
     custom = models.CharField(_("payment method"), max_length=255, blank=True)
     payer_id = models.CharField(_("payer id"), max_length=255, blank=True)
     transaction_fee = models.DecimalField(_("transaction fee"), max_digits=9, decimal_places=2, default=Decimal(0))
+    related_resource_id = models.CharField(_("related resource id"), max_length=255, blank=True, null=True)
 
     failure_reason = models.CharField(_("failure reason"), max_length=255, blank=True)
 
@@ -76,6 +77,8 @@ class PaypalPayment(models.Model):
                                         sale_response = paypal_wrapper.call_api(url=link['href'])
                                         if sale_response and 'transaction_fee' in sale_response and 'value' in sale_response['transaction_fee'] and sale_response['transaction_fee']['currency'] == 'EUR':
                                             self.transaction_fee = Decimal(sale_response['transaction_fee']['value'])
+                            if 'id' in resource['sale']:
+                                self.related_resource_id = resource['sale']['id']
 
         if 'payer' in payment_response and 'payer_info' in payment_response['payer'] and 'payer_id' in payment_response['payer']['payer_info']:
             self.payer_id = payment_response['payer']['payer_info']['payer_id']
