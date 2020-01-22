@@ -19,7 +19,7 @@ class PaypalPayment(models.Model):
     custom = models.CharField(_("payment method"), max_length=255, blank=True)
     payer_id = models.CharField(_("payer id"), max_length=255, blank=True)
     transaction_fee = models.DecimalField(_("transaction fee"), max_digits=9, decimal_places=2, default=Decimal(0))
-    related_resource_id = models.CharField(_("related resource id"), max_length=255, blank=True)
+    related_resource_id = models.CharField(_("related resource id"), max_length=255, blank=True, null=True)
 
     failure_reason = models.CharField(_("failure reason"), max_length=255, blank=True)
 
