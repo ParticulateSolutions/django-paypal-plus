@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 @python_2_unicode_compatible
 class PaypalPayment(models.Model):
-    payment_id = models.CharField(_("payment id"), max_length=255, unique=True)  # id created by paypal
+    payment_id = models.CharField(_("payment id"), max_length=255, unique=True, on_delete=)  # id created by paypal
     intent = models.CharField(_("intent"), max_length=255)  # sale
     experience_profile_id = models.CharField(_("intent"), max_length=255, blank=True)  # sale
     note_to_payer = models.CharField(_("intent"), max_length=165, blank=True)  # sale
@@ -104,7 +104,7 @@ class PaypalPayment(models.Model):
 
 @python_2_unicode_compatible
 class PaypalTransaction(models.Model):
-    payment = models.ForeignKey(PaypalPayment, verbose_name=_("payment"), related_name='transactions')
+    payment = models.ForeignKey(PaypalPayment, verbose_name=_("payment"), related_name='transactions', on_delete=models.PROTECT)
 
     total_amount = models.DecimalField(_("total amount"), max_digits=9, decimal_places=2)
     currency = models.CharField(_("currency"), max_length=10)
@@ -155,7 +155,7 @@ class PaypalTransaction(models.Model):
 
 @python_2_unicode_compatible
 class PaypalItem(models.Model):
-    transaction = models.ForeignKey(PaypalTransaction, verbose_name=_("transaction"), related_name='items')
+    transaction = models.ForeignKey(PaypalTransaction, verbose_name=_("transaction"), related_name='items', on_delete=models.PROTECT)
 
     sku = models.CharField(_("stock keeping unit"), max_length=127)
     name = models.CharField(_("name"), max_length=127)
