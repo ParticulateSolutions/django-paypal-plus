@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
                 ('shipping_address_normalization_status', models.CharField(default='UNKNOWN', max_length=50, verbose_name='shipping address normalization status')),
                 ('shipping_address_type', models.CharField(default='HOME_OR_WORK', max_length=50, verbose_name='shipping address type')),
                 ('shipping_address_recipient_name', models.CharField(max_length=127, verbose_name='shipping address recipient name')),
-                ('payment', models.ForeignKey(related_name='transactions', verbose_name='payment', to='django_paypal.PaypalPayment')),
+                ('payment', models.ForeignKey(related_name='transactions', verbose_name='payment', to='django_paypal.PaypalPayment', on_delete=models.deletion.PROTECT)),
             ],
             options={
                 'verbose_name': 'Paypal Transaction',
@@ -100,6 +100,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='paypalitem',
             name='transaction',
-            field=models.ForeignKey(related_name='items', verbose_name='transaction', to='django_paypal.PaypalTransaction'),
+            field=models.ForeignKey(related_name='items', verbose_name='transaction', to='django_paypal.PaypalTransaction', on_delete=models.deletion.PROTECT),
         ),
     ]
