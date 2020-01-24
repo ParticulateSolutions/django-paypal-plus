@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 import logging
 
 from decimal import Decimal
@@ -20,6 +21,8 @@ class PaypalPayment(models.Model):
     payer_id = models.CharField(_("payer id"), max_length=255, blank=True)
     transaction_fee = models.DecimalField(_("transaction fee"), max_digits=9, decimal_places=2, default=Decimal(0))
     related_resource_id = models.CharField(_("related resource id"), max_length=255, blank=True, null=True)
+    initial_response_object = models.TextField(_("initial post response"), null=True, blank=True)
+    update_response_object = models.TextField(_("updated get response"), null=True, blank=True)
 
     failure_reason = models.CharField(_("failure reason"), max_length=255, blank=True)
 
@@ -64,6 +67,8 @@ class PaypalPayment(models.Model):
             logger = logging.getLogger(__name__)
             logger.error("Paypal Payment Status Error: expected: {0}, found: {1}".format(expected_status, payment_response['state']))
             return False
+
+        self.update_response_object = json.dumps(payment_response)
 
         if payment_response['state'] == 'approved':
             fee = Decimal(0)
