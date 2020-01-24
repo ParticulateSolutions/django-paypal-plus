@@ -86,6 +86,7 @@ class PaypalWrapper(object):
                     note_to_payer=payment_response.get('note_to_payer', ''),
                     payment_method=payment_response['payer'].get('payment_method', ''),
                     custom=payment_response.get('custom', ''),
+                    initial_response_object=json.dumps(payment_response),
                 )
                 if 'links' in payment_response:
                     for link in payment_response['links']:
