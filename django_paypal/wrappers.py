@@ -7,6 +7,7 @@ import os
 import sys
 from decimal import Decimal
 
+import certifi
 from django.conf import settings
 
 from django_paypal import settings as django_paypal_settings
@@ -25,7 +26,6 @@ except ImportError:
 
 class PaypalWrapper(object):
     interface_version = 'django_paypal_v{}'.format(django_paypal_settings.DJANGO_PAYPAL_VERSION)
-    cafile = os.path.join(os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), 'django_paypal')), 'cacert.pem')
 
     api_url = django_paypal_settings.PAYPAL_API_URL
     sandbox_url = django_paypal_settings.PAYPAL_SANDBOX_API_URL
@@ -34,12 +34,16 @@ class PaypalWrapper(object):
 
     auth = None
 
-    def __init__(self, auth=None):
+    def __init__(self, auth=None, sandbox=None):
         super(PaypalWrapper, self).__init__()
         if getattr(settings, 'PAYPAL', False):
             self.auth = auth
-            if django_paypal_settings.PAYPAL_SANDBOX:
-                self.api_url = self.sandbox_url
+            if sandbox is not None:
+                if sandbox:
+                    self.api_url = self.sandbox_url
+            else:
+                if django_paypal_settings.PAYPAL_SANDBOX:
+                    self.api_url = self.sandbox_url
 
     def init(self, intent, payer, transactions, note_to_payer=None, experience_profile_id=None,
              success_url=django_paypal_settings.PAYPAL_SUCCESS_URL,
@@ -82,6 +86,7 @@ class PaypalWrapper(object):
                     note_to_payer=payment_response.get('note_to_payer', ''),
                     payment_method=payment_response['payer'].get('payment_method', ''),
                     custom=payment_response.get('custom', ''),
+                    initial_response_object=json.dumps(payment_response),
                 )
                 if 'links' in payment_response:
                     for link in payment_response['links']:
@@ -174,7 +179,7 @@ class PaypalWrapper(object):
         request.add_header('Content-Type', 'application/json')
         try:
             if sys.version_info.major > 2 or (sys.version_info.major == 2 and sys.version_info.major > 7 or (sys.version_info.major == 7 and sys.version_info.major >= 9)):
-                response = urlopen(request, cafile=self.cafile)
+                response = urlopen(request, cafile=certifi.where())
             else:
                 response = urlopen(request)
         except HTTPError as e:
@@ -194,7 +199,7 @@ class PaypalWrapper(object):
         url = '{0}{1}'.format(self.api_url, self.auth_url)
         request = Request(url=url)
         # preparing request
-        base64string = base64.encodestring('%s:%s' % (self.auth['API_CLIENT_ID'], self.auth['API_SECRET'])).replace('\n', '')
+        base64string = base64.encodestring(('%s:%s' % (self.auth['API_CLIENT_ID'], self.auth['API_SECRET'])).encode()).decode().replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
         data = "grant_type=client_credentials"
         data_len = len(data)
@@ -204,7 +209,7 @@ class PaypalWrapper(object):
 
         try:
             if sys.version_info.major > 2 or (sys.version_info.major == 2 and sys.version_info.major > 7 or (sys.version_info.major == 7 and sys.version_info.major >= 9)):
-                response = urlopen(request, cafile=self.cafile)
+                response = urlopen(request, cafile=certifi.where())
             else:
                 response = urlopen(request)
         except HTTPError as e:

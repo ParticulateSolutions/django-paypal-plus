@@ -1,7 +1,7 @@
 import json
 
 from django.http import HttpResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
@@ -23,7 +23,13 @@ class NotifyPaypalView(View):
         # general attributes
         if 'resource' not in request_data:
             return HttpResponse(status=400)
-        payment_id = request_data['resource']['parent_payment']
+        payment_id = None
+        for key in ['parent_payment', 'id']:
+            if key in request_data['resource']:
+                payment_id = request_data['resource'][key]
+                break
+        if payment_id is None:
+            return HttpResponse(status=400)
 
         try:
             paypal_payment = PaypalPayment.objects.get(payment_id=payment_id)

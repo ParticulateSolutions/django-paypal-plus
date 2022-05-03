@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 
+import json
 import logging
 
 from decimal import Decimal
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 @python_2_unicode_compatible
@@ -19,6 +20,9 @@ class PaypalPayment(models.Model):
     custom = models.CharField(_("payment method"), max_length=255, blank=True)
     payer_id = models.CharField(_("payer id"), max_length=255, blank=True)
     transaction_fee = models.DecimalField(_("transaction fee"), max_digits=9, decimal_places=2, default=Decimal(0))
+    related_resource_id = models.CharField(_("related resource id"), max_length=255, blank=True, null=True)
+    initial_response_object = models.TextField(_("initial post response"), null=True, blank=True)
+    update_response_object = models.TextField(_("updated get response"), null=True, blank=True)
 
     failure_reason = models.CharField(_("failure reason"), max_length=255, blank=True)
 
@@ -64,6 +68,8 @@ class PaypalPayment(models.Model):
             logger.error("Paypal Payment Status Error: expected: {0}, found: {1}".format(expected_status, payment_response['state']))
             return False
 
+        self.update_response_object = json.dumps(payment_response)
+
         if payment_response['state'] == 'approved':
             fee = Decimal(0)
             for transaction in payment_response['transactions']:
@@ -76,6 +82,8 @@ class PaypalPayment(models.Model):
                                         sale_response = paypal_wrapper.call_api(url=link['href'])
                                         if sale_response and 'transaction_fee' in sale_response and 'value' in sale_response['transaction_fee'] and sale_response['transaction_fee']['currency'] == 'EUR':
                                             self.transaction_fee = Decimal(sale_response['transaction_fee']['value'])
+                            if 'id' in resource['sale']:
+                                self.related_resource_id = resource['sale']['id']
 
         if 'payer' in payment_response and 'payer_info' in payment_response['payer'] and 'payer_id' in payment_response['payer']['payer_info']:
             self.payer_id = payment_response['payer']['payer_info']['payer_id']
@@ -101,7 +109,7 @@ class PaypalPayment(models.Model):
 
 @python_2_unicode_compatible
 class PaypalTransaction(models.Model):
-    payment = models.ForeignKey(PaypalPayment, verbose_name=_("payment"), related_name='transactions')
+    payment = models.ForeignKey(PaypalPayment, verbose_name=_("payment"), related_name='transactions', on_delete=models.PROTECT)
 
     total_amount = models.DecimalField(_("total amount"), max_digits=9, decimal_places=2)
     currency = models.CharField(_("currency"), max_length=10)
@@ -143,7 +151,7 @@ class PaypalTransaction(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.transaction_id
+        return '{} - {} {}'.format(self.reference_id, self.total_amount, self.currency)
 
     class Meta:
         verbose_name = _("Paypal Transaction")
@@ -152,7 +160,7 @@ class PaypalTransaction(models.Model):
 
 @python_2_unicode_compatible
 class PaypalItem(models.Model):
-    transaction = models.ForeignKey(PaypalTransaction, verbose_name=_("transaction"), related_name='items')
+    transaction = models.ForeignKey(PaypalTransaction, verbose_name=_("transaction"), related_name='items', on_delete=models.PROTECT)
 
     sku = models.CharField(_("stock keeping unit"), max_length=127)
     name = models.CharField(_("name"), max_length=127)
@@ -169,7 +177,7 @@ class PaypalItem(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return self.sku
+        return self.name
 
     class Meta:
         verbose_name = _("Paypal Item")
