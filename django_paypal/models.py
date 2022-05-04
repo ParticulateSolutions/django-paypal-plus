@@ -21,6 +21,7 @@ class PaypalPayment(models.Model):
     payer_id = models.CharField(_("payer id"), max_length=255, blank=True)
     transaction_fee = models.DecimalField(_("transaction fee"), max_digits=9, decimal_places=2, default=Decimal(0))
     related_resource_id = models.CharField(_("related resource id"), max_length=255, blank=True, null=True)
+    related_resource_state = models.CharField(_("related resource state"), max_length=255, blank=True, null=True)
     initial_response_object = models.TextField(_("initial post response"), null=True, blank=True)
     update_response_object = models.TextField(_("updated get response"), null=True, blank=True)
 
@@ -84,6 +85,8 @@ class PaypalPayment(models.Model):
                                             self.transaction_fee = Decimal(sale_response['transaction_fee']['value'])
                             if 'id' in resource['sale']:
                                 self.related_resource_id = resource['sale']['id']
+                            if 'state' in resource['sale']:
+                                self.related_resource_state = resource['sale']['state']
 
         if 'payer' in payment_response and 'payer_info' in payment_response['payer'] and 'payer_id' in payment_response['payer']['payer_info']:
             self.payer_id = payment_response['payer']['payer_info']['payer_id']
