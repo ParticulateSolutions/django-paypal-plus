@@ -1,7 +1,7 @@
-from django.conf.urls import url
+from django.urls import re_path
 
-from .views import NotifyPaypalView
+from .webhooks import PaypalWebhookView
 
 urlpatterns = [
-    url(r'^notify/$', NotifyPaypalView.as_view(), name='notifiy'),
+    re_path(r'^webhooks/$', PaypalWebhookView.as_view(), name='paypal-webhooks'),
 ]
