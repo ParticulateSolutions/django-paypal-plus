@@ -18,17 +18,18 @@ class PaypalOrder(models.Model):
     status = models.CharField(_('Status'), max_length=255, blank=True)
 
 
-class PaypalAPIResponse(models.Model):
-    order = models.ForeignKey(PaypalOrder, related_name='api_responses', on_delete=models.CASCADE)
-    url = models.CharField(_('URL'), max_length=255, blank=True)
-    response_data = JSONField(_('Response Data'))
-    created_at = models.DateTimeField(auto_now_add=True)
-
-
 class PaypalAPIPostData(models.Model):
     order = models.ForeignKey(PaypalOrder, related_name='api_posts', on_delete=models.CASCADE)
     url = models.CharField(_('URL'), max_length=255, blank=True)
     post_data = JSONField(_('Post Data'))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PaypalAPIResponse(models.Model):
+    order = models.ForeignKey(PaypalOrder, related_name='api_responses', on_delete=models.CASCADE)
+    post = models.ForeignKey(PaypalAPIPostData, related_name='responses', null=True, on_delete=models.CASCADE)
+    url = models.CharField(_('URL'), max_length=255, blank=True)
+    response_data = JSONField(_('Response Data'))
     created_at = models.DateTimeField(auto_now_add=True)
 
 

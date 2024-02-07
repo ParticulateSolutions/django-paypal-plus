@@ -81,8 +81,8 @@ class PaypalWrapper(object):
         order_response_dict = self.call_api(url=url, data=order_data, method='POST')
         order_response = OrderCreatedAPIResponse.from_dict(order_response_dict)
         new_order = PaypalOrder.objects.create(order_id=order_response.id, status=order_response.status)
-        PaypalAPIPostData.objects.create(order=new_order, url=url, post_data=order_data)
-        PaypalAPIResponse.objects.create(order=new_order, url=url, response_data=order_response_dict)
+        post_obj = PaypalAPIPostData.objects.create(order=new_order, url=url, post_data=order_data)
+        PaypalAPIResponse.objects.create(order=new_order, url=url, response_data=order_response_dict, post=post_obj)
         order_created.send(sender=self.__class__, order=new_order, response=order_response_dict)
         return order_response
 
@@ -93,8 +93,8 @@ class PaypalWrapper(object):
         order_capture = OrderCaptureAPIResponse.from_dict(order_capture_response)
         order.status = order_capture.status
         order.save(update_fields=['status'])
-        PaypalAPIPostData.objects.create(order=order, url=url, post_data={})
-        PaypalAPIResponse.objects.create(order=order, url=url, response_data=order_capture_response)
+        post_obj = PaypalAPIPostData.objects.create(order=order, url=url, post_data={})
+        PaypalAPIResponse.objects.create(order=order, url=url, response_data=order_capture_response, post=post_obj)
         order_captured.send(sender=self.__class__, order=order, response=order_capture_response)
         return order_capture
 
