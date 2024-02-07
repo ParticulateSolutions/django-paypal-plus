@@ -1,21 +1,17 @@
 from django.contrib import admin
 
-from .models import PaypalPayment, PaypalTransaction, PaypalItem
+from .models import PaypalOrder, PaypalAPIResponse
 
 
-class PaypalPaymentAdmin(admin.ModelAdmin):
+class PaypalOrderAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(PaypalPayment, PaypalPaymentAdmin)
+
+admin.site.register(PaypalOrder, PaypalOrderAdmin)
 
 
-class PaypalTransactionAdmin(admin.ModelAdmin):
+class PaypalAPIResponseAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(PaypalTransaction, PaypalTransactionAdmin)
 
-
-class PaypalItemAdmin(admin.ModelAdmin):
-    pass
-
-admin.site.register(PaypalItem, PaypalItemAdmin)
+admin.site.register(PaypalAPIResponse, PaypalAPIResponseAdmin)
