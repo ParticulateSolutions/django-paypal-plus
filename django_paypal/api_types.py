@@ -422,3 +422,29 @@ class WebhookEvent(NamedTuple):
     resource_type: str
     resource_version: str
     summary: str
+
+
+@dataclass
+class SellerReceivableBreakdown:
+    gross_amount: Amount
+    net_amount: Amount
+    paypal_fee: Amount
+
+
+@dataclass
+class SellerProtection:
+    dispute_categories: List[str]
+    status: str
+
+
+@dataclass
+class Capture:
+    amount: Amount
+    create_time: str
+    final_capture: bool
+    id: str
+    links: List[Link]
+    seller_protection: SellerProtection
+    seller_receivable_breakdown: SellerReceivableBreakdown
+    status: str
+    update_time: str

@@ -132,7 +132,7 @@ class PaypalWrapper(object):
         try:
             response_dict = self.call_api(url=webhook_api, method='POST', data=data)
             return PaypalWebhook.objects.create(
-                webhook_id=response_dict['id'], url=response_dict['url'], events=response_dict['event_types']
+                webhook_id=response_dict['id'], url=response_dict['url'], event_types=response_dict['event_types']
             )
         except PaypalAPIError as e:
             response_json = e.response.json()
@@ -140,7 +140,7 @@ class PaypalWrapper(object):
                 webhook_list = self.call_api(url=webhook_api, method='GET')
                 for webhook in webhook_list.get('webhooks', []):
                     if webhook['url'] == webhook_listener:
-                        return PaypalWebhook.objects.create(webhook_id=webhook['id'], url=webhook['url'], events=webhook['event_types'])
+                        return PaypalWebhook.objects.create(webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'])
             raise e
 
     def patch_webhook(self, webhook_id: str, patch_data: List[Dict]) -> PaypalWebhook:
@@ -152,7 +152,7 @@ class PaypalWrapper(object):
         url = '{0}{1}'.format(self.api_url, f'/v1/notifications/webhooks/{webhook_id}')
         webhook_response_dict = self.call_api(url=url, method='PATCH', data=patch_data)
         paypal_webhook.url = webhook_response_dict['url']
-        paypal_webhook.events = webhook_response_dict['event_types']
+        paypal_webhook.event_types = webhook_response_dict['event_types']
         paypal_webhook.save()
         return paypal_webhook
 
@@ -205,4 +205,7 @@ class PaypalWrapper(object):
             response_json = response.json()
             return OAuthResponse(**response_json)
         except requests.HTTPError as e:
+            print(e.response.json(), url)
+            print("Client id", self.auth.client_id)
+            print("Client secret", self.auth.client_secret)
             raise PaypalAuthFailure(str(e), response=e.response)

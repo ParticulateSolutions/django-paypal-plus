@@ -2,8 +2,13 @@ from __future__ import unicode_literals
 
 
 from decimal import Decimal
+from typing import List
+
+from dataclass_wizard import fromdict
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+from django_paypal.api_types import SellerReceivableBreakdown, Capture
 
 try:
     # Django 3.1 and newer
@@ -16,6 +21,18 @@ except ImportError:
 class PaypalOrder(models.Model):
     order_id = models.CharField(_('Order ID'), max_length=255, unique=True)
     status = models.CharField(_('Status'), max_length=255, blank=True)
+
+    def get_capture_api_responses(self) -> models.QuerySet:
+        return self.api_responses.filter(url__contains=f'/v2/checkout/orders/{self.order_id}/capture')
+
+    @property
+    def captures(self) -> List[Capture]:
+        captures: List[Capture] = list()
+        for capture_response in self.get_capture_api_responses():
+            for purchase_unit in capture_response.response_data.get('purchase_units', []):
+                for capture in purchase_unit.get('payments', {}).get('captures', []):
+                    captures.append(fromdict(Capture, capture))
+        return captures
 
 
 class PaypalAPIPostData(models.Model):
@@ -36,7 +53,13 @@ class PaypalAPIResponse(models.Model):
 class PaypalWebhook(models.Model):
     webhook_id = models.CharField(_('Webhook ID'), max_length=255, unique=True)
     url = models.CharField('URL', max_length=255, unique=True)
-    events = JSONField(_('Active Webhook Events'))
+    event_types = JSONField(_('Active Webhook Events'))
+
+
+class PaypalWebhookEvent(models.Model):
+    payload = JSONField(_('Payload'))
+    order = models.ForeignKey(PaypalOrder, related_name='webhook_events', on_delete=models.CASCADE)
+    webhook = models.ForeignKey(PaypalWebhook, related_name='events', on_delete=models.CASCADE)
 
 
 # The following models solely exist to keep payments made in version <0.3.0 stored in the database.
