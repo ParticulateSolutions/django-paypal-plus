@@ -23,70 +23,53 @@ There are just two steps needed to install django-paypal-plus:
     # Those are dummy test data - change to your data
     PAYPAL_API_CLIENT_ID = "Your-PayPal-Client-ID"
     PAYPAL_API_SECRET = "Your-PayPal-Secret"
-    PAYPAL_ROOT_URL = 'https://example.com"
+ 	PAYPAL_AUTH_CACHE_KEY = "paypal_auth_cache_key" (optional, default is "django-paypal-auth")
+ 	PAYPAL_AUTH_CACHE_TIMEOUT = 3600 (optional, default is 600 seconds)
+ 	PAYPAL_WEBHOOK_ID = "Your-PayPal-Webhook-ID" (optional, default is None)
 
 	```
 
 
 ## What do you need for django-paypal-plus?
 
-1. Django >= 1.8
+1. Django >= 2.2
+2. Python >= 3.8
 
 ## Usage
 
-```python
-paypal_wrapper = PaypalWrapper(auth={
-    'API_CLIENT_ID': settings.PAYPAL_API_CLIENT_ID,
-    'API_SECRET': settings.PAYPAL_API_SECRET
-})
-amount = 10
-transactions = [{
-    "reference_id": 1234,
-    "amount": {
-        "total": amount,
-        "currency": "EUR",
-        "details": {
-            "subtotal": amount,
-        }
-    },
-    "payment_options": {
-        "allowed_payment_method": "INSTANT_FUNDING_SOURCE"
-    },
-    "item_list": {
-        "items": [{
-            "name": "Donation",
-            "description": "My donation",
-            "quantity": "1",
-            "price": amount,
-            "currency": "EUR"
-        }],
-        "shipping_address": {
-            "recipient_name": "Particulate Solutions GmbH",
-            "line1": "Universitaetsstrasse 3",
-            "city": "Koblenz",
-            "country_code": "DE",
-            "postal_code": "56070"
-        }
-    }
-}]
 
-paypal_payment = paypal_wrapper.init(
-    intent='sale',
-    payer={'payment_method': 'paypal'},
-    note_to_payer="My donation",
-    cancellation_url=cancelled_url,
-    transactions=transactions,
-    success_url=request.build_absolute_uri(reverse('paypal_donation_success', kwargs={'reference_number': 1234})),
+### Create a new order
+```python
+paypal_wrapper = PaypalWrapper(
+	auth=APIAuthCredentials(
+		client_id=django_paypal_settings.PAYPAL_API_CLIENT_ID, client_secret=django_paypal_settings.PAYPAL_API_SECRET
+	)
+)
+
+
+paypal_order = paypal_wrapper.create_order(
+	intent='sale',
+	intent='CAPTURE',
+	payer={'payment_method': 'paypal'},
+	purchase_units=<purchase_units>,
+	note_to_payer="Thank you for your purchase!",
+	payment_source=paypal_api.PaymentSource(paypal=paypal_api.PayPal()),
+	cancellation_url=<cancelled_url>,
+	transactions=<transactions>,
+	success_url=<my success url>
 )
 ```
 
-Here is an example to check if a payment was approved:
+### Capture an order
 ```python
-is_updated = paypal_payment.refresh_from_paypal(paypal_wrapper=paypal_wrapper)
-if is_updated and paypal_payment.state == 'approved':
-    # open the PayPal window using NotifyPaypalView
+paypal_wrapper.capture_order(resource_id)
 ```
+
+### Listening to webhooks
+
+By default, django-paypal-plus has a ``PaypalWebhookView`` listening to Order events. If you haven't already set up webhooks on PayPal,
+``paypal_wrapper.setup_webhooks(<webhook_url>)`` will do that for you.
 
 ## Copyright and license
 
-Copyright 2017-2018 Jonas Braun for Particulate Solutions GmbH, under [MIT license](https://github.com/minddust/bootstrap-progressbar/blob/master/LICENSE).
+Copyright 2024 - Tim Burg for Particulate Solutions GmbH, under [MIT license](https://github.com/minddust/bootstrap-progressbar/blob/master/LICENSE).
