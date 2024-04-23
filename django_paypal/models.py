@@ -52,6 +52,7 @@ class PaypalAPIResponse(models.Model):
 
 class PaypalWebhook(models.Model):
     webhook_id = models.CharField(_('Webhook ID'), max_length=255, unique=True)
+    auth_hash = models.CharField(_('Auth Hash'), max_length=255, unique=True, default='')
     url = models.CharField('URL', max_length=255, unique=True)
     event_types = JSONField(_('Active Webhook Events'))
 

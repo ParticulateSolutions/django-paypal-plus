@@ -24,13 +24,9 @@ def verify_and_save_webhook_event(request: HttpRequest, paypal_wrapper: PaypalWr
         paypal_wrapper.verify_webhook_event(request, paypal_webhook.webhook_id)
         try:
             paypal_order = PaypalOrder.objects.get(order_id=payload['resource']['id'])
-        except (KeyError, TypeError):   # if the payload does not contain the order id
+        except (KeyError, TypeError):  # if the payload does not contain the order id
             paypal_order = None
-        event_data = {
-            'payload': payload,
-            'webhook': paypal_webhook,
-            'order': paypal_order
-        }
+        event_data = {'payload': payload, 'webhook': paypal_webhook, 'order': paypal_order}
         PaypalWebhookEvent.objects.create(**event_data)
 
 

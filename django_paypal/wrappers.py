@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import hashlib
 import json
 import warnings
 from typing import Literal, List, Any, Dict
@@ -123,7 +124,7 @@ class PaypalWrapper(object):
             raise PaypalAPIError(str(e), response=e.response)
 
     def setup_webhooks(self, webhook_listener: str) -> PaypalWebhook:
-        if PaypalWebhook.objects.filter(url=webhook_listener).exists():
+        if PaypalWebhook.objects.filter(url=webhook_listener, auth_hash=self.api_auth_hash).exists():
             raise ValueError(f'Webhook listener ({webhook_listener}) already exists')
         from django_paypal.webhooks import WebhookEvents
 
@@ -140,7 +141,9 @@ class PaypalWrapper(object):
                 webhook_list = self.call_api(url=webhook_api, method='GET')
                 for webhook in webhook_list.get('webhooks', []):
                     if webhook['url'] == webhook_listener:
-                        return PaypalWebhook.objects.create(webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'])
+                        return PaypalWebhook.objects.create(
+                            webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'], auth_hash=self._api_auth_hash
+                        )
             raise e
 
     def patch_webhook(self, webhook_id: str, patch_data: List[Dict]) -> PaypalWebhook:
@@ -206,6 +209,10 @@ class PaypalWrapper(object):
             return OAuthResponse(**response_json)
         except requests.HTTPError as e:
             print(e.response.json(), url)
-            print("Client id", self.auth.client_id)
-            print("Client secret", self.auth.client_secret)
+            print('Client id', self.auth.client_id)
+            print('Client secret', self.auth.client_secret)
             raise PaypalAuthFailure(str(e), response=e.response)
+
+    @property
+    def api_auth_hash(self) -> str:
+        return hashlib.md5(f'{self.auth.client_id}{self.auth.client_secret}'.encode()).hexdigest()
