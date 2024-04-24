@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import hashlib
 import json
 import warnings
 from typing import Literal, List, Any, Dict
@@ -104,7 +105,7 @@ class PaypalWrapper(object):
         order_details_response = self.call_api(url=url, method='GET')
         return OrderDetailAPIResponse.from_dict(order_details_response)
 
-    def call_api(self, url: str, method: Literal['GET', 'POST', 'PATCH'], data=None) -> Dict[str, Any]:
+    def call_api(self, url: str, method: Literal['GET', 'POST', 'PATCH', 'DELETE'], data=None) -> Dict[str, Any]:
         headers = {'Authorization': f'Bearer {self._get_access_token()}', 'Content-Type': 'application/json'}
 
         try:
@@ -114,6 +115,8 @@ class PaypalWrapper(object):
                 response = requests.post(url, headers=headers, json=data)
             elif method == 'PATCH':
                 response = requests.patch(url, headers=headers, json=data)
+            elif method == 'DELETE':
+                response = requests.delete(url, headers=headers)
             else:
                 raise ValueError('Invalid method')
             response.raise_for_status()
@@ -149,12 +152,22 @@ class PaypalWrapper(object):
         except PaypalWebhook.DoesNotExist as e:
             warnings.warn(f'Webhook with id {webhook_id} does not exist in the database. Set up webhooks by calling "setup_webhooks"')
             raise e
-        url = '{0}{1}'.format(self.api_url, f'/v1/notifications/webhooks/{webhook_id}')
+        url = '{0}{1}'.format(self.api_url, f'/v1/notifications/webhooks/{paypal_webhook.webhook_id}')
         webhook_response_dict = self.call_api(url=url, method='PATCH', data=patch_data)
         paypal_webhook.url = webhook_response_dict['url']
         paypal_webhook.event_types = webhook_response_dict['event_types']
         paypal_webhook.save()
         return paypal_webhook
+
+    def delete_webhook(self, webhook_id: str) -> bool:
+        try:
+            paypal_webhook = PaypalWebhook.objects.get(webhook_id=webhook_id)
+        except PaypalWebhook.DoesNotExist as e:
+            raise e
+        url = '{0}{1}'.format(self.api_url, f'/v1/notifications/webhooks/{paypal_webhook.webhook_id}')
+        self.call_api(url=url, method='DELETE')
+        paypal_webhook.delete()
+        return True
 
     def verify_webhook_event(self, request: HttpRequest, webhook_id: str) -> bool:
         headers = request.headers
@@ -179,16 +192,24 @@ class PaypalWrapper(object):
             return True
         raise PaypalWebhookVerificationError('Webhook verification failed', res)
 
+    def verify_api_keys(self) -> bool:
+        try:
+            self._get_access_token()
+            return True
+        except PaypalAuthFailure:
+            return False
+
     def _get_access_token(self) -> str:
         if not self.auth_cache_timeout:
             auth_response = self._authorize_client()
             return auth_response.access_token
         else:
-            access_token = cache.get(self.auth_cache_key)
+            cache_key = self.auth_cache_key.format(auth_hash=self.api_auth_hash)
+            access_token = cache.get(cache_key)
             if not access_token:
                 auth_response = self._authorize_client()
                 access_token = auth_response.access_token
-                cache.set(self.auth_cache_key, access_token, self.auth_cache_timeout)
+                cache.set(cache_key, access_token, self.auth_cache_timeout)
             return access_token
 
     def _authorize_client(self) -> OAuthResponse:
@@ -205,7 +226,8 @@ class PaypalWrapper(object):
             response_json = response.json()
             return OAuthResponse(**response_json)
         except requests.HTTPError as e:
-            print(e.response.json(), url)
-            print("Client id", self.auth.client_id)
-            print("Client secret", self.auth.client_secret)
             raise PaypalAuthFailure(str(e), response=e.response)
+
+    @property
+    def api_auth_hash(self) -> str:
+        return hashlib.md5(f'{self.auth.client_id}:{self.auth.client_secret}'.encode()).hexdigest()
