@@ -1,6 +1,24 @@
 # Changelog
 
-## v1.0.0
+## v1.1.0
+* Added support for multiple API keys using the same webhook endpoint
+* `PaypalWebhook` model has been extended by new field `auth_hash`
+### Breaking Changes
+* `setup_webhooks` now uses a hash created from the API key + secret to create unique webhooks. This means that if you call
+the existing `setup_webhooks` method, it will create new webhooks for the same API key as the check is now on both key and url.
+Since we don't save API keys anywhere in this library, you will need to update existing webhooks yourself. This should be relatively easy
+since, as before this version, each endpoint is clearly mapped to only one `PaypalWebhook` object.
+
+
+---
+
+
+### v1.0.1
+* Fixed bug in webhook verficiation on production
+
+---
+
+# v1.0.0
 
 ### Breaking Changes
 
