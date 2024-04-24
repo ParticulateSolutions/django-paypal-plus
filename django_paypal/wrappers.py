@@ -117,6 +117,8 @@ class PaypalWrapper(object):
                 response = requests.patch(url, headers=headers, json=data)
             elif method == 'DELETE':
                 response = requests.delete(url, headers=headers)
+                response.raise_for_status()
+                return {'deleted': True}
             else:
                 raise ValueError('Invalid method')
             response.raise_for_status()
@@ -135,7 +137,10 @@ class PaypalWrapper(object):
         try:
             response_dict = self.call_api(url=webhook_api, method='POST', data=data)
             return PaypalWebhook.objects.create(
-                webhook_id=response_dict['id'], url=response_dict['url'], event_types=response_dict['event_types']
+                webhook_id=response_dict['id'],
+                auth_hash=self.api_auth_hash,
+                url=response_dict['url'],
+                event_types=response_dict['event_types'],
             )
         except PaypalAPIError as e:
             response_json = e.response.json()
@@ -144,7 +149,7 @@ class PaypalWrapper(object):
                 for webhook in webhook_list.get('webhooks', []):
                     if webhook['url'] == webhook_listener:
                         return PaypalWebhook.objects.create(
-                            webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'], auth_hash=self._api_auth_hash
+                            webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'], auth_hash=self.api_auth_hash
                         )
             raise e
 
@@ -161,9 +166,9 @@ class PaypalWrapper(object):
         paypal_webhook.save()
         return paypal_webhook
 
-    def delete_webhook(self, webhook_id: str) -> bool:
+    def delete_webhook(self, webhook_listener: str) -> bool:
         try:
-            paypal_webhook = PaypalWebhook.objects.get(webhook_id=webhook_id)
+            paypal_webhook = PaypalWebhook.objects.get(url=webhook_listener, auth_hash=self.api_auth_hash)
         except PaypalWebhook.DoesNotExist as e:
             raise e
         url = '{0}{1}'.format(self.api_url, f'/v1/notifications/webhooks/{paypal_webhook.webhook_id}')
@@ -195,11 +200,8 @@ class PaypalWrapper(object):
         raise PaypalWebhookVerificationError('Webhook verification failed', res)
 
     def verify_api_keys(self) -> bool:
-        try:
-            self._get_access_token()
-            return True
-        except PaypalAuthFailure:
-            return False
+        self._get_access_token()
+        return True
 
     def _get_access_token(self) -> str:
         if not self.auth_cache_timeout:
