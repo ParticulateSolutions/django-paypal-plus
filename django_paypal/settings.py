@@ -13,7 +13,7 @@ PAYPAL_SANDBOX = getattr(settings, 'PAYPAL_SANDBOX', True)
 
 PAYPAL_AUTH_URL = getattr(settings, 'PAYPAL_AUTH_URL', '/v1/oauth2/token')
 PAYPAL_AUTH_CACHE_TIMEOUT = getattr(settings, 'PAYPAL_AUTH_CACHE_TIMEOUT', 600)  # 10 minutes
-PAYPAL_AUTH_CACHE_KEY = getattr(settings, 'PAYPAL_AUTH_CACHE_KEY', 'django-paypal-auth')
+PAYPAL_AUTH_CACHE_KEY = getattr(settings, 'PAYPAL_AUTH_CACHE_KEY', 'django-paypal-auth-{auth_hash}')
 PAYPAL_ORDERS_API_ENDPOINT = getattr(settings, 'PAYPAL_ORDERS_API_ENDPOINT', '/v2/checkout/orders')
 PAYPAL_WEBHOOK_LISTENER = getattr(settings, 'PAYPAL_WEBHOOK_LISTENER', None)
 

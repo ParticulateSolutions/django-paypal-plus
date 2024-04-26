@@ -8,7 +8,7 @@ from dataclass_wizard import fromdict
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from django_paypal.api_types import SellerReceivableBreakdown, Capture
+from django_paypal.api_types import Capture
 
 try:
     # Django 3.1 and newer
@@ -52,8 +52,15 @@ class PaypalAPIResponse(models.Model):
 
 class PaypalWebhook(models.Model):
     webhook_id = models.CharField(_('Webhook ID'), max_length=255, unique=True)
-    url = models.CharField('URL', max_length=255, unique=True)
+    auth_hash = models.CharField(_('Auth Hash'), max_length=255, default='')
+    url = models.CharField('URL', max_length=255)
     event_types = JSONField(_('Active Webhook Events'))
+
+    class Meta:
+        unique_together = (
+            'url',
+            'auth_hash',
+        )
 
 
 class PaypalWebhookEvent(models.Model):
