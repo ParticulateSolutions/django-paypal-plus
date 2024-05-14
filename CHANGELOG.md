@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.1
+### Bugfixes
+* Fixed bug in retrieving correct webhook when multiple webhooks are set up for the same endpoint
+
+---
+
 ## v1.1.0
 ### Features
 * Added support for multiple API keys using the same webhook endpoint
