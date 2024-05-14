@@ -20,7 +20,7 @@ class WebhookEvents:
 
 def verify_and_save_webhook_event(request: HttpRequest, paypal_wrapper: PaypalWrapper, payload: Dict[str, Any]):
     if not settings.DEBUG:
-        paypal_webhook = PaypalWebhook.objects.get(url=request.build_absolute_uri())
+        paypal_webhook = PaypalWebhook.objects.get(url=request.build_absolute_uri(), auth_hash=paypal_wrapper.api_auth_hash)
         paypal_wrapper.verify_webhook_event(request, paypal_webhook.webhook_id)
         try:
             paypal_order = PaypalOrder.objects.get(order_id=payload['resource']['id'])
