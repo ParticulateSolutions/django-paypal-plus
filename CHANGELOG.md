@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.2
+### Bugfixes
+* When paying with PayPal, but without an account (i.e. credit card), a shipping address might not exist in PayPal's capture response.
+This threw an error when capturing while still successfuly capturing the order on PayPal's side. This field is now optional
+* When capturing an order that has been captured/completed already, we now throw a `PaypalOrderAlreadyCapturedError` exception
+
+---
+
 ## v1.1.1
 ### Bugfixes
 * Fixed bug in retrieving correct webhook when multiple webhooks are set up for the same endpoint

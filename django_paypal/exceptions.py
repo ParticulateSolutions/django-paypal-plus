@@ -11,3 +11,7 @@ class PaypalAPIError(RequestException):
 
 class PaypalWebhookVerificationError(BaseException):
     pass
+
+
+class PaypalOrderAlreadyCapturedError(RequestException):
+    pass
