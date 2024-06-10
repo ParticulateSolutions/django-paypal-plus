@@ -396,7 +396,7 @@ class CaptureShipping:
 class CapturedPurchaseUnit:
     payments: Payments
     reference_id: str
-    shipping: CaptureShipping
+    shipping: Optional[CaptureShipping] = None
 
 
 @dataclass

@@ -11,7 +11,7 @@ from django.http import HttpRequest
 from requests.auth import HTTPBasicAuth
 
 from django_paypal import settings as django_paypal_settings
-from django_paypal.exceptions import PaypalAuthFailure, PaypalAPIError, PaypalWebhookVerificationError
+from django_paypal.exceptions import PaypalAuthFailure, PaypalAPIError, PaypalWebhookVerificationError, PaypalOrderAlreadyCapturedError
 from django_paypal.models import (
     PaypalOrder,
     PaypalAPIPostData,
@@ -90,7 +90,16 @@ class PaypalWrapper(object):
     def capture_order(self, order_id: str) -> OrderCaptureAPIResponse:
         order = PaypalOrder.objects.get(order_id=order_id)
         url = f'{self.api_url}{self.orders_api_endpoint}/{order.order_id}/capture'
-        order_capture_response = self.call_api(url=url, method='POST')
+
+        try:
+            order_capture_response = self.call_api(url=url, method='POST')
+        except PaypalAPIError as e:
+            if e.response.status_code == 422:
+                order_capture_response = e.response.json()
+                if order_capture_response.get('name') == 'UNPROCESSABLE_ENTITY':
+                    if order_capture_response['details'][0]['issue'] == 'ORDER_ALREADY_CAPTURED':
+                        raise PaypalOrderAlreadyCapturedError(str(e), response=e.response)
+
         order_capture = OrderCaptureAPIResponse.from_dict(order_capture_response)
         order.status = order_capture.status
         order.save(update_fields=['status'])
