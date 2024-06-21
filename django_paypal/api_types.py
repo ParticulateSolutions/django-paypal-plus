@@ -22,6 +22,9 @@ CardType = Literal[
     'CETELEM',
     'CHINA_UNION_PAY',
 ]
+Intent = Literal['CAPTURE', 'AUTHORIZE']
+ProcessingInstruction = Literal['ORDER_COMPLETE_ON_PAYMENT_APPROVAL', 'NO_INSTRUCTION']
+PhoneType = Literal['FAX', 'HOME', 'MOBILE', 'OTHER', 'PAGER']
 
 
 @dataclass
@@ -35,20 +38,31 @@ class OAuthResponse:
 
 
 @dataclass
+class Link:
+    href: str
+    rel: str
+    method: Optional[Literal['GET', 'POST', 'PATCH', 'DELETE']] = None
+
+
+@dataclass
 class PhoneNumber:
     national_number: str
+    extension_number: Optional[str] = None
 
 
 @dataclass
-class Phone:
+class PhoneWithType:
     phone_number: PhoneNumber
-    phone_type: Optional[Literal['FAX', 'HOME', 'MOBILE', 'OTHER', 'PAGER']] = None
+    phone_type: Optional[PhoneType] = None
 
 
 @dataclass
-class AccountHolder:
+class Name:
+    prefix: Optional[str] = None
     given_name: Optional[str] = None
     surname: Optional[str] = None
+    middle_name: Optional[str] = None
+    suffix: Optional[str] = None
     full_name: Optional[str] = None
 
     def __post_init__(self):
@@ -73,7 +87,17 @@ class ExperienceContext:
 @dataclass
 class TaxInfo:
     tax_id: Optional[str] = None
-    tax_id_type: Optional[str] = None
+    tax_id_type: Optional[Literal['BR_CPF', 'BR_CNPJ']] = None
+
+
+@dataclass
+class AddressDetails:
+    street_number: Optional[str] = None
+    street_name: Optional[str] = None
+    street_type: Optional[str] = None
+    delivery_service: Optional[str] = None
+    building_name: Optional[str] = None
+    sub_building: Optional[str] = None
 
 
 @dataclass
@@ -81,16 +105,20 @@ class Address:
     country_code: str
     address_line_1: Optional[str] = None
     address_line_2: Optional[str] = None
+    address_line_3: Optional[str] = None
     admin_area_1: Optional[str] = None
     admin_area_2: Optional[str] = None
+    admin_area_3: Optional[str] = None
+    admin_area_4: Optional[str] = None
     postal_code: Optional[str] = None
+    address_details: Optional[AddressDetails] = None
 
 
 @dataclass
 class Customer:
     id: Optional[str] = None
     email_address: Optional[str] = None
-    phone: Optional[Phone] = None
+    merchant_customer_id: Optional[str] = None
 
 
 @dataclass
@@ -104,21 +132,36 @@ class Vault:
 
 
 @dataclass
-class Attributes:
+class PayPalWalletAttributes:
     customer: Optional[Customer] = None
     vault: Optional[Vault] = None
 
 
 @dataclass
-class PayPal:
-    experience_context: Optional[ExperienceContext] = None
-    billing_agreement_id: Optional[str] = None
+class PayPalWallet:
+    name: Optional[Name] = None
+    phone: Optional[PhoneType] = None
     vault_id: Optional[str] = None
     email_address: Optional[str] = None
     birth_date: Optional[str] = None
     tax_info: Optional[TaxInfo] = None
     address: Optional[Address] = None
-    attributes: Optional[Attributes] = None
+    attributes: Optional[PayPalWalletAttributes] = None
+    experience_context: Optional[ExperienceContext] = None
+    billing_agreement_id: Optional[str] = None
+
+
+@dataclass
+class PayPalWalletResponse:
+    email_address: Optional[str] = None
+    account_id: Optional[str] = None
+    name: Optional[Name] = None
+    phone_type: Optional[PhoneType] = None
+    phone_number: Optional[PhoneNumber] = None
+    birth_date: Optional[str] = None
+    tax_info: Optional[TaxInfo] = None
+    address: Optional[Address] = None
+    attributes: Optional[PayPalWalletAttributes] = None
 
 
 @dataclass
@@ -126,7 +169,7 @@ class PaymentSource(JSONWizard):
     class _(JSONWizard.Meta):
         key_transform_with_dump = 'SNAKE'
 
-    paypal: PayPal
+    paypal: PayPalWallet
 
 
 @dataclass
@@ -145,11 +188,11 @@ class Tax:
 class PurchaseItem:
     name: str
     quantity: int
-    category: ItemCategories
     unit_amount: Amount
     description: Optional[str] = None
     sku: Optional[str] = None
     tax: Optional[Tax] = None
+    category: Optional[ItemCategories] = None
 
 
 @dataclass
@@ -191,16 +234,38 @@ class ShippingOption:
     id: str
     label: str
     selected: bool
-    type: ShippingType
+    type: Optional[ShippingType] = None
     amount: Optional[Amount] = None
 
 
 @dataclass
-class Shipping:
-    type: ShippingType = None
+class ShippingDetail:
+    type: Optional[ShippingType] = None
     options: Optional[List[ShippingOption]] = None
-    name: Optional[AccountHolder] = None
+    name: Optional[Name] = None
     address: Optional[Address] = None
+
+
+@dataclass
+class TrackerItem:
+    name: Optional[str] = None
+    quantity: Optional[str] = None
+    sku: Optional[str] = None
+    image_url: Optional[str] = None
+    upc: Optional[Any] = None
+
+
+@dataclass
+class Tracker:
+    id: Optional[str] = None
+    status: Optional[Any] = None
+    items: Optional[List[TrackerItem]] = None
+    links: Optional[List[Link]] = None
+
+
+@dataclass
+class ShippingWithTrackingDetail(ShippingDetail):
+    trackers: Optional[List[Tracker]] = None
 
 
 @dataclass
@@ -250,7 +315,7 @@ class PurchaseUnit(JSONWizard):
     class _(JSONWizard.Meta):
         key_transform_with_dump = 'SNAKE'
 
-    amount: PurchaseUnitAmount
+    amount: Optional[PurchaseUnitAmount] = None
     reference_id: Optional[str] = None
     description: Optional[str] = None
     custom_id: Optional[str] = None
@@ -259,7 +324,7 @@ class PurchaseUnit(JSONWizard):
     items: Optional[List[PurchaseItem]] = None
     payee: Optional[Payee] = None
     payment_instruction: Optional[PaymentInstruction] = None
-    shipping: Optional[Shipping] = None
+    shipping: Optional[ShippingWithTrackingDetail] = None
     supplementary_data: Optional[SupplementaryData] = None
 
 
@@ -293,13 +358,6 @@ class APIAuthCredentials(NamedTuple):
 
 
 @dataclass
-class Link:
-    href: str
-    method: Literal['GET', 'POST', 'PATCH', 'DELETE']
-    rel: str
-
-
-@dataclass
 class OrderCreatedAPIResponse(JSONWizard):
     class _(JSONWizard.Meta):
         key_transform_with_dump = 'SNAKE'
@@ -315,21 +373,12 @@ class Payer:
     payer_id: str
     address: Optional[Address] = None
     email_address: Optional[str] = None
-    name: Optional[AccountHolder] = None
+    name: Optional[Name] = None
 
 
 @dataclass
-class OrderDetailPayPal:
-    account_id: str
-    account_status: str
-    address: Address
-    email_address: str
-    name: AccountHolder
-
-
-@dataclass
-class OrderDetailPaymentSource:
-    paypal: OrderDetailPayPal
+class PaymentSourceResponse:
+    paypal: PayPalWalletResponse
 
 
 @dataclass
@@ -337,13 +386,16 @@ class OrderDetailAPIResponse(JSONWizard):
     class _(JSONWizard.Meta):
         key_transform_with_dump = 'SNAKE'
 
-    id: str
-    create_time: str
-    links: List[Link]
-    payer: Payer
-    payment_source: OrderDetailPaymentSource
-    purchase_units: List[PurchaseUnit]
-    status: str
+    id: Optional[str] = None
+    links: Optional[List[Link]] = None
+    payer: Optional[Payer] = None
+    payment_source: Optional[PaymentSourceResponse] = None
+    purchase_units: Optional[List[PurchaseUnit]] = None
+    status: Optional[str] = None
+    create_time: Optional[str] = None
+    update_time: Optional[str] = None
+    processing_instruction: Optional[ProcessingInstruction] = None
+    intent: Optional[Intent] = None
 
 
 @dataclass
@@ -389,7 +441,7 @@ class CaptureAddress:
 @dataclass
 class CaptureShipping:
     address: CaptureAddress
-    name: AccountHolder
+    name: Name
 
 
 @dataclass
@@ -400,16 +452,8 @@ class CapturedPurchaseUnit:
 
 
 @dataclass
-class OrderCaptureAPIResponse(JSONWizard):
-    class _(JSONWizard.Meta):
-        key_transform_with_dump = 'SNAKE'
-
-    id: str
-    links: List[Link]
-    payer: Payer
-    payment_source: OrderDetailPaymentSource
-    purchase_units: List[CapturedPurchaseUnit]
-    status: str
+class OrderCaptureAPIResponse(OrderDetailAPIResponse):
+    pass
 
 
 class WebhookEvent(NamedTuple):
