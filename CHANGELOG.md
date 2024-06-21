@@ -1,5 +1,64 @@
 # Changelog
 
+## v1.1.3
+### Bugfixes and Changes
+
+#### Refactor: Literals & Constants
+- Added `Intent`, `ProcessingInstruction`, and `PhoneType` as `Literal` types.
+
+#### Link Class Updates
+- Moved `Link` class definition up and added `Optional` typing for the `method` attribute.
+
+#### PhoneNumber Enhancements
+- Added `extension_number` attribute to `PhoneNumber`.
+
+#### Class Renaming and Modifications
+- Renamed `Phone` to `PhoneWithType`.
+- Renamed `AccountHolder` to `Name` and updated with additional attributes: `prefix`, `middle_name`, and `suffix`.
+
+#### Address Enhancements
+- Added `AddressDetails` class for detailed address components.
+- Extended `Address` class with additional attributes: `address_line_3`, `admin_area_3`, `admin_area_4`, and `address_details`.
+
+#### Customer Class Update
+- Added `merchant_customer_id` attribute to `Customer`.
+
+#### PayPalWallet and Attributes
+- Renamed `PayPal` to `PayPalWallet`.
+- Renamed `Attributes` to `PayPalWalletAttributes`.
+- Introduced `PayPalWalletResponse` for response handling.
+
+#### Shipping Detail Updates
+- Renamed `Shipping` to `ShippingDetail`.
+- Introduced `ShippingWithTrackingDetail`, incorporating tracking capabilities with `Tracker` and `TrackerItem` classes.
+
+#### PurchaseItem Class Updates
+- Made `category` attribute optional.
+
+#### PurchaseUnit Modifications
+- Made `amount` attribute optional in `PurchaseUnit`.
+
+#### Order Response Updates
+- Introduced `PaymentSourceResponse` class.
+- Updated `OrderDetailAPIResponse` with additional optional attributes: `update_time`, `processing_instruction`, and `intent`.
+- `OrderCaptureAPIResponse` now extends from `OrderDetailAPIResponse`.
+
+#### Error Handling
+- When capturing order and receiving an API error that does not lead to `PaypalOrderAlreadyCapturedError` no error was raised.
+This now raises `PaypalAPIError` again.
+
+### Removals
+
+#### Deprecated Classes
+- Removed `CETELEM` and `CHINA_UNION_PAY`.
+
+#### Removed Unused Data Classes
+- `CaptureAddress`, `CaptureShipping`, and `CapturedPurchaseUnit`.
+
+These changes introduce enhanced flexibility and more detailed data structures, ensuring comprehensive handling of various attributes and improving code readability and maintainability.
+
+---
+
 ## v1.1.2
 ### Bugfixes
 * When paying with PayPal, but without an account (i.e. credit card), a shipping address might not exist in PayPal's capture response.

@@ -28,6 +28,7 @@ from django_paypal.api_types import (
     OrderCreatedAPIResponse,
     OrderCaptureAPIResponse,
     OrderDetailAPIResponse,
+    Intent,
 )
 from django_paypal.utils import build_paypal_full_uri
 from django_paypal.signals import order_captured, order_created
@@ -53,7 +54,7 @@ class PaypalWrapper(object):
 
     def create_order(
         self,
-        intent: Literal['CAPTURE', 'AUTHORIZE'],
+        intent: Intent,
         purchase_units: List[PurchaseUnit],
         payment_source: PaymentSource,
         application_context: ApplicationContext = None,
@@ -99,6 +100,7 @@ class PaypalWrapper(object):
                 if order_capture_response.get('name') == 'UNPROCESSABLE_ENTITY':
                     if order_capture_response['details'][0]['issue'] == 'ORDER_ALREADY_CAPTURED':
                         raise PaypalOrderAlreadyCapturedError(str(e), response=e.response)
+            raise e
 
         order_capture = OrderCaptureAPIResponse.from_dict(order_capture_response)
         order.status = order_capture.status
