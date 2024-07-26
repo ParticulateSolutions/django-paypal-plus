@@ -326,6 +326,7 @@ class PurchaseUnit(JSONWizard):
     payment_instruction: Optional[PaymentInstruction] = None
     shipping: Optional[ShippingWithTrackingDetail] = None
     supplementary_data: Optional[SupplementaryData] = None
+    custom: Optional[str] = None
 
 
 @dataclass
