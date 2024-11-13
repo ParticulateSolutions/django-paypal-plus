@@ -399,56 +399,34 @@ class OrderDetailAPIResponse(JSONWizard):
 
 
 @dataclass
-class SellerProtection:
-    dispute_categories: List[str]
-    status: str
+class SellerReceivableBreakdown:
+    gross_amount: Amount
+    net_amount: Optional[Amount] = None
+    paypal_fee: Optional[Amount] = None
 
 
 @dataclass
-class SellerReceivableBreakdown:
-    gross_amount: Amount
-    net_amount: Amount
-    paypal_fee: Amount
+class SellerProtection:
+    dispute_categories: Optional[List[str]] = None
+    status: Optional[str] = None
 
 
 @dataclass
 class Capture:
-    amount: Amount
-    create_time: str
-    final_capture: bool
-    id: str
-    links: List[Link]
-    seller_protection: SellerProtection
-    seller_receivable_breakdown: SellerReceivableBreakdown
-    status: str
-    update_time: str
+    amount: Optional[Amount] = None
+    id: Optional[str] = None
+    links: Optional[List[Link]] = None
+    create_time: Optional[str] = None
+    final_capture: Optional[bool] = None
+    seller_protection: Optional[SellerProtection] = None
+    seller_receivable_breakdown: Optional[SellerReceivableBreakdown] = None
+    status: Optional[str] = None
+    update_time: Optional[str] = None
 
 
 @dataclass
 class Payments:
     captures: List[Capture]
-
-
-@dataclass
-class CaptureAddress:
-    address_line_1: Optional[str] = None
-    address_line_2: Optional[str] = None
-    admin_area_1: Optional[str] = None
-    admin_area_2: Optional[str] = None
-    postal_code: Optional[str] = None
-
-
-@dataclass
-class CaptureShipping:
-    address: CaptureAddress
-    name: Name
-
-
-@dataclass
-class CapturedPurchaseUnit:
-    payments: Payments
-    reference_id: str
-    shipping: Optional[CaptureShipping] = None
 
 
 @dataclass
@@ -466,29 +444,3 @@ class WebhookEvent(NamedTuple):
     resource_type: str
     resource_version: str
     summary: str
-
-
-@dataclass
-class SellerReceivableBreakdown:
-    gross_amount: Amount
-    net_amount: Amount
-    paypal_fee: Amount
-
-
-@dataclass
-class SellerProtection:
-    dispute_categories: List[str]
-    status: str
-
-
-@dataclass
-class Capture:
-    amount: Amount
-    create_time: str
-    final_capture: bool
-    id: str
-    links: List[Link]
-    seller_protection: SellerProtection
-    seller_receivable_breakdown: SellerReceivableBreakdown
-    status: str
-    update_time: str
