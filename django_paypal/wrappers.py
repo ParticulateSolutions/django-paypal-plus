@@ -102,7 +102,6 @@ class PaypalWrapper(object):
                         raise PaypalOrderAlreadyCapturedError(str(e), response=e.response)
             raise e
 
-
         order_capture = OrderCaptureAPIResponse.from_dict(order_capture_response)
         order.status = order_capture.status
         order.save(update_fields=['status'])
