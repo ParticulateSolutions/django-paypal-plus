@@ -21,6 +21,7 @@ except ImportError:
 class PaypalOrder(models.Model):
     order_id = models.CharField(_('Order ID'), max_length=255, unique=True)
     status = models.CharField(_('Status'), max_length=255, blank=True)
+    capture_id = models.JSONField(_('Capture ID'), null=True, default=list)
 
     def get_capture_api_responses(self) -> models.QuerySet:
         return self.api_responses.filter(url__contains=f'/v2/checkout/orders/{self.order_id}/capture')
