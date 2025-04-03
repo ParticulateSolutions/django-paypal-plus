@@ -103,8 +103,17 @@ class PaypalWrapper(object):
             raise e
 
         order_capture = OrderCaptureAPIResponse.from_dict(order_capture_response)
+        captures_id_list = []
+        for purchase_unit in order_capture.purchase_units:
+            for capture in purchase_unit.get('payments', {}).get('captures', []):
+                if capture.id and capture.reference_id == order_id:
+                    if capture.id in order.capture_id:
+                        raise PaypalOrderAlreadyCapturedError('Order already captured', response=order_capture_response)
+                    captures_id_list.append(capture.id)
+
         order.status = order_capture.status
-        order.save(update_fields=['status'])
+        order.capture_id = captures_id_list
+        order.save(update_fields=['status', 'capture_id'])
         post_obj = PaypalAPIPostData.objects.create(order=order, url=url, post_data={})
         PaypalAPIResponse.objects.create(order=order, url=url, response_data=order_capture_response, post=post_obj)
         order_captured.send(sender=self.__class__, order=order, response=order_capture_response)
