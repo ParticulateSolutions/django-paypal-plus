@@ -1,4 +1,11 @@
-from django.db import migrations, models
+from django.db import migrations
+try:
+    # Django 3.1 and newer
+    from django.db.models import JSONField
+except ImportError:
+    # Django 2.2
+    from django.contrib.postgres.fields import JSONField
+
 
 class Migration(migrations.Migration):
 
@@ -10,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='PaypalOrder',
             name='capture_id',
-            field=models.JSONField(verbose_name='Capture ID', null=True, default=list),
+            field=JSONField(verbose_name='Capture ID', null=True, default=list),
         ),
     ]
