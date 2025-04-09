@@ -12,7 +12,7 @@ def migrate_capture_id(apps, schema_editor):
     for order in PaypalOrder.objects.all():
         if order.capture_id:
             continue
-        for response in order.get_capture_api_responses():
+        for response in order.api_responses.filter(url__contains=f'/v2/checkout/orders/{order.order_id}/capture'):
             order_capture = OrderCaptureAPIResponse.from_dict(response.response_data)
             captures_id_list = []
             for purchase_unit in order_capture.purchase_units:
