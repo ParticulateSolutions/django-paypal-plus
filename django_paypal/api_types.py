@@ -311,24 +311,6 @@ class SupplementaryData:
 
 
 @dataclass
-class PurchaseUnit(JSONWizard):
-    class _(JSONWizard.Meta):
-        key_transform_with_dump = 'SNAKE'
-
-    amount: Optional[PurchaseUnitAmount] = None
-    reference_id: Optional[str] = None
-    description: Optional[str] = None
-    custom_id: Optional[str] = None
-    invoice_id: Optional[str] = None
-    soft_descriptor: Optional[str] = None
-    items: Optional[List[PurchaseItem]] = None
-    payee: Optional[Payee] = None
-    payment_instruction: Optional[PaymentInstruction] = None
-    shipping: Optional[ShippingWithTrackingDetail] = None
-    supplementary_data: Optional[SupplementaryData] = None
-
-
-@dataclass
 class PreviousNetworkTransactionReference:
     id: str
     network: CardType
@@ -382,23 +364,6 @@ class PaymentSourceResponse:
 
 
 @dataclass
-class OrderDetailAPIResponse(JSONWizard):
-    class _(JSONWizard.Meta):
-        key_transform_with_dump = 'SNAKE'
-
-    id: Optional[str] = None
-    links: Optional[List[Link]] = None
-    payer: Optional[Payer] = None
-    payment_source: Optional[PaymentSourceResponse] = None
-    purchase_units: Optional[List[PurchaseUnit]] = None
-    status: Optional[str] = None
-    create_time: Optional[str] = None
-    update_time: Optional[str] = None
-    processing_instruction: Optional[ProcessingInstruction] = None
-    intent: Optional[Intent] = None
-
-
-@dataclass
 class SellerReceivableBreakdown:
     gross_amount: Amount
     net_amount: Optional[Amount] = None
@@ -429,11 +394,6 @@ class Payments:
     captures: List[Capture]
 
 
-@dataclass
-class OrderCaptureAPIResponse(OrderDetailAPIResponse):
-    pass
-
-
 class WebhookEvent(NamedTuple):
     create_time: str
     event_type: str
@@ -444,3 +404,44 @@ class WebhookEvent(NamedTuple):
     resource_type: str
     resource_version: str
     summary: str
+
+
+@dataclass
+class PurchaseUnit(JSONWizard):
+    class _(JSONWizard.Meta):
+        key_transform_with_dump = 'SNAKE'
+
+    amount: Optional[PurchaseUnitAmount] = None
+    reference_id: Optional[str] = None
+    description: Optional[str] = None
+    custom_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    soft_descriptor: Optional[str] = None
+    items: Optional[List[PurchaseItem]] = None
+    payee: Optional[Payee] = None
+    payment_instruction: Optional[PaymentInstruction] = None
+    shipping: Optional[ShippingWithTrackingDetail] = None
+    supplementary_data: Optional[SupplementaryData] = None
+    payments: Optional[Payments] = None
+
+
+@dataclass
+class OrderDetailAPIResponse(JSONWizard):
+    class _(JSONWizard.Meta):
+        key_transform_with_dump = 'SNAKE'
+
+    id: Optional[str] = None
+    links: Optional[List[Link]] = None
+    payer: Optional[Payer] = None
+    payment_source: Optional[PaymentSourceResponse] = None
+    purchase_units: Optional[List[PurchaseUnit]] = None
+    status: Optional[str] = None
+    create_time: Optional[str] = None
+    update_time: Optional[str] = None
+    processing_instruction: Optional[ProcessingInstruction] = None
+    intent: Optional[Intent] = None
+
+
+@dataclass
+class OrderCaptureAPIResponse(OrderDetailAPIResponse):
+    pass
