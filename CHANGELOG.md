@@ -1,5 +1,48 @@
 # Changelog
 
+## v1.1.9
+### Bugfixes and Changes
+*   Corrected the data migration (from v1.1.7, fixed in v1.1.8) again to properly handle potentially missing `purchase_units`, `payments`, or `captures` fields within stored API response data when populating the `capture_id` field for existing orders.
+*   Modified the `PaypalOrder.capture_id` model field to be non-nullable, ensuring it always defaults to an empty list (`default=list` instead of `null=True, default=list`). **Note:** This requires a database schema migration.
+*   Updated the order capture logic (added in v1.1.5, refactored in v1.1.7) to safely handle optional `purchase_units`, `payments`, and `captures` attributes returned by the PayPal API, preventing potential errors.
+*   Performed general code cleanup, addressing potential type errors and improving overall robustness, particularly around handling potentially missing data in API responses.
+
+---
+
+## v1.1.8
+### Bugfixes and Changes
+*   Fixed the data migration introduced in v1.1.7. The migration previously failed because it incorrectly attempted to use a model method (`get_capture_api_responses`) within the migration environment. It now correctly filters associated `APIResponse` objects directly using `order.api_responses.filter(url__contains=...)`.
+
+---
+
+## v1.1.7
+### Features
+*   Introduced a data migration to populate the `capture_id` field (added in v1.1.5) for existing `PaypalOrder` records. This migration parses stored capture API responses to extract and save capture IDs.
+
+### Bugfixes and Changes
+*   Added the `payments` attribute (containing `captures`) to the `PurchaseUnit` API response dataclass.
+*   Refactored the order capture logic to utilize the updated dataclass structure (specifically `purchase_unit.payments.captures`), improving consistency and type safety compared to the previous dictionary access.
+
+---
+
+## v1.1.6
+### Bugfixes and Changes
+*   Updated the database migration that added the `PaypalOrder.capture_id` field (from v1.1.5) to ensure compatibility with Django 2.2.
+
+---
+
+## v1.1.5
+### Features
+*   Added a new `capture_id` field (`JSONField`) to the `PaypalOrder` model. This field stores a list of capture IDs associated with the order, populated when the order is successfully captured via the API.
+
+---
+
+## v1.1.4
+### Bugfixes and Changes
+*   Made various fields across multiple API response dataclasses optional. This enhances robustness by preventing errors when the PayPal API response does not include certain expected fields.
+
+---
+
 ## v1.1.3
 ### Bugfixes and Changes
 
