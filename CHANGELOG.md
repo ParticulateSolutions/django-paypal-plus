@@ -5,6 +5,7 @@
 *   Corrected the data migration (from v1.1.7, fixed in v1.1.8) again to properly handle potentially missing `purchase_units`, `payments`, or `captures` fields within stored API response data when populating the `capture_id` field for existing orders.
 *   Modified the `PaypalOrder.capture_id` model field to be non-nullable, ensuring it always defaults to an empty list (`default=list` instead of `null=True, default=list`). **Note:** This requires a database schema migration.
 *   Updated the order capture logic (added in v1.1.5, refactored in v1.1.7) to safely handle optional `purchase_units`, `payments`, and `captures` attributes returned by the PayPal API, preventing potential errors.
+*   Renamed the `Payments` dataclass to `PaymentCollection`. This dataclass now includes optional fields for `authorizations` and `refunds`, and the existing `captures` field was also made optional, reflecting the structure of PayPal API responses more accurately.
 *   Performed general code cleanup, addressing potential type errors and improving overall robustness, particularly around handling potentially missing data in API responses.
 
 ---
