@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import hashlib
 import json
 import warnings
-from typing import Literal, List, Any, Dict
+from typing import Literal, List, Any, Dict, Optional
 
 from django.core.cache import cache
 import requests
@@ -44,7 +44,7 @@ class PaypalWrapper(object):
     auth_cache_timeout = django_paypal_settings.PAYPAL_AUTH_CACHE_TIMEOUT
     auth_cache_key = django_paypal_settings.PAYPAL_AUTH_CACHE_KEY
 
-    auth: APIAuthCredentials = None
+    auth: Optional[APIAuthCredentials] = None
 
     def __init__(self, auth: APIAuthCredentials, sandbox=None):
         super(PaypalWrapper, self).__init__()
@@ -57,7 +57,7 @@ class PaypalWrapper(object):
         intent: Intent,
         purchase_units: List[PurchaseUnit],
         payment_source: PaymentSource,
-        application_context: ApplicationContext = None,
+        application_context: Optional[ApplicationContext] = None,
         success_url=django_paypal_settings.PAYPAL_SUCCESS_URL,
         cancellation_url=django_paypal_settings.PAYPAL_CANCELLATION_URL,
     ) -> OrderCreatedAPIResponse:
@@ -95,7 +95,7 @@ class PaypalWrapper(object):
         try:
             order_capture_response = self.call_api(url=url, method='POST')
         except PaypalAPIError as e:
-            if e.response.status_code == 422:
+            if e.response and e.response.status_code == 422:
                 order_capture_response = e.response.json()
                 if order_capture_response.get('name') == 'UNPROCESSABLE_ENTITY':
                     if order_capture_response['details'][0]['issue'] == 'ORDER_ALREADY_CAPTURED':
@@ -104,14 +104,17 @@ class PaypalWrapper(object):
 
         order_capture = OrderCaptureAPIResponse.from_dict(order_capture_response)
         captures_id_list = []
-        for purchase_unit in order_capture.purchase_units:
-            for capture in purchase_unit.payments.captures:
-                if capture.id:
-                    if capture.id in order.capture_id:
-                        raise PaypalOrderAlreadyCapturedError('Order already captured')
-                    captures_id_list.append(capture.id)
 
-        order.status = order_capture.status
+        if order_capture.purchase_units:
+            for purchase_unit in order_capture.purchase_units:
+                if purchase_unit.payments and purchase_unit.payments.captures:
+                    for capture in purchase_unit.payments.captures:
+                        if capture.id:
+                            if capture.id in order.capture_id:
+                                raise PaypalOrderAlreadyCapturedError('Order already captured')
+                            captures_id_list.append(capture.id)
+
+        order.status = order_capture.status or ''
         order.capture_id = captures_id_list
         order.save(update_fields=['status', 'capture_id'])
         post_obj = PaypalAPIPostData.objects.create(order=order, url=url, post_data={})
@@ -163,14 +166,15 @@ class PaypalWrapper(object):
                 event_types=response_dict['event_types'],
             )
         except PaypalAPIError as e:
-            response_json = e.response.json()
-            if response_json.get('name') == 'WEBHOOK_URL_ALREADY_EXISTS':
-                webhook_list = self.call_api(url=webhook_api, method='GET')
-                for webhook in webhook_list.get('webhooks', []):
-                    if webhook['url'] == webhook_listener:
-                        return PaypalWebhook.objects.create(
-                            webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'], auth_hash=self.api_auth_hash
-                        )
+            if e.response:
+                response_json = e.response.json()
+                if response_json.get('name') == 'WEBHOOK_URL_ALREADY_EXISTS':
+                    webhook_list = self.call_api(url=webhook_api, method='GET')
+                    for webhook in webhook_list.get('webhooks', []):
+                        if webhook['url'] == webhook_listener:
+                            return PaypalWebhook.objects.create(
+                                webhook_id=webhook['id'], url=webhook['url'], event_types=webhook['event_types'], auth_hash=self.api_auth_hash
+                            )
             raise e
 
     def patch_webhook(self, webhook_id: str, patch_data: List[Dict]) -> PaypalWebhook:
@@ -237,6 +241,9 @@ class PaypalWrapper(object):
             return access_token
 
     def _authorize_client(self) -> OAuthResponse:
+        if not self.auth:
+            raise ValueError('Auth credentials not set')
+        
         # preparing request
         url = f'{self.api_url}{self.auth_url}'
 
@@ -254,4 +261,6 @@ class PaypalWrapper(object):
 
     @property
     def api_auth_hash(self) -> str:
+        if not self.auth:
+            raise ValueError('Auth credentials not set')
         return hashlib.md5(f'{self.auth.client_id}{self.auth.client_secret}'.encode()).hexdigest()

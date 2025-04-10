@@ -37,10 +37,18 @@ class PaypalWebhookView(View):
         event_type = post_dict.get('event_type')
         if event_type not in WebhookEvents.ORDERS:
             return HttpResponse(status=400)
+        
+        client_id_val = django_paypal_settings.PAYPAL_API_CLIENT_ID
+        client_secret_val = django_paypal_settings.PAYPAL_API_SECRET
+
+        # Add runtime assertions
+        assert isinstance(client_id_val, str), "PAYPAL_API_CLIENT_ID setting must be a string"
+        assert isinstance(client_secret_val, str), "PAYPAL_API_SECRET setting must be a string"
 
         paypal_wrapper = PaypalWrapper(
             auth=APIAuthCredentials(
-                client_id=django_paypal_settings.PAYPAL_API_CLIENT_ID, client_secret=django_paypal_settings.PAYPAL_API_SECRET
+                client_id=client_id_val, 
+                client_secret=client_secret_val
             )
         )
 

@@ -390,8 +390,10 @@ class Capture:
 
 
 @dataclass
-class Payments:
-    captures: List[Capture]
+class PaymentCollection:
+    authorizations: Optional[List[Any]] = None
+    captures: Optional[List[Capture]] = None
+    refunds: Optional[List[Any]] = None
 
 
 class WebhookEvent(NamedTuple):
@@ -422,7 +424,7 @@ class PurchaseUnit(JSONWizard):
     payment_instruction: Optional[PaymentInstruction] = None
     shipping: Optional[ShippingWithTrackingDetail] = None
     supplementary_data: Optional[SupplementaryData] = None
-    payments: Optional[Payments] = None
+    payments: Optional[PaymentCollection] = None
 
 
 @dataclass
